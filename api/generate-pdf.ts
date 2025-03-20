@@ -1,9 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { generatePDF } from '@/services/pdfService';
 import chrome from 'chrome-aws-lambda';
 import puppeteer from 'puppeteer-core';
 
-// Update the generatePDF function to use chrome-aws-lambda
 const getOptions = async () => {
   if (process.env.NODE_ENV === 'production') {
     return {
