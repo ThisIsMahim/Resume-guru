@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { generatePDF } from '@/services/pdfService';
 import chrome from 'chrome-aws-lambda';
 import puppeteer from 'puppeteer-core';
@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     await page.setContent(html);
     const pdf = await page.pdf({
-      format: 'A4',
+      format: 'a4',
       printBackground: true,
       margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
     });
