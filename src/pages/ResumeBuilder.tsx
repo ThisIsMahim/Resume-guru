@@ -198,18 +198,56 @@ const ResumeBuilder = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!resumeHtml) {
       toast.error("No resume to download", {
         description: "Please complete the conversation to generate your resume first."
       });
       return;
     }
-    
-    // In a real implementation, this would call an API endpoint to generate and download a PDF
-    toast.success("Resume prepared for download!", {
-      description: "Your professional resume is ready. Downloading PDF..."
-    });
+
+    try {
+      setIsThinking(true);
+      
+      // Call the API endpoint to generate PDF
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ html: resumeHtml }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Get the PDF blob
+      const pdfBlob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'resume.pdf';
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Resume downloaded successfully!", {
+        description: "Your professional resume has been downloaded as PDF."
+      });
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+      toast.error("Failed to download resume", {
+        description: "There was an error generating your PDF. Please try again."
+      });
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   const handleReset = async () => {
