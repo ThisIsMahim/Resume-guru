@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,13 +11,14 @@ const plans = [
     price: "0",
     description: "Basic resume creation for job seekers",
     features: [
-      "1 resume",
+      "3 resumes per month",
       "3 basic templates",
       "ATS compatibility check",
       "Download as PDF (with watermark)",
       "Basic AI suggestions"
     ],
     limitations: [
+      "Limited to 3 downloads per month",
       "Limited template options",
       "No keyword optimization",
       "No custom sections",

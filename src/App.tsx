@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import "./App.css";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Auth from "./pages/Auth";
+import Profile from '@/pages/Profile';
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,11 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

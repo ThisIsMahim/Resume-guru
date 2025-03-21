@@ -2,10 +2,27 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://wkucwdydkbujvkuotbms.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrdWN3ZHlka2J1anZrdW90Ym1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0NDMyNDcsImV4cCI6MjA1ODAxOTI0N30.z1t9BS3htXimWLiC8lYXCwFaP0kPcBxCaylf4L2NeMc";
+if (!import.meta.env.VITE_SUPABASE_URL) {
+  throw new Error('Missing environment variable: VITE_SUPABASE_URL');
+}
+
+if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  throw new Error('Missing environment variable: VITE_SUPABASE_ANON_KEY');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+declare module '@supabase/supabase-js' {
+  interface SupabaseClient {
+    rpc<T = any>(
+      fn: 'get_remaining_downloads' | 'check_download_limit',
+      params?: { user_id: string }
+    ): Promise<{ data: T; error: Error | null }>;
+  }
+}
+
+export const supabase = createClient<Database>(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);

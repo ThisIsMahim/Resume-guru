@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Send, Bot, User, Download, RefreshCw, PaperclipIcon, FileText } from "lucide-react";
+import { Send, Bot, User, Download, RefreshCw, PaperclipIcon, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import ResumeBuilderNavbar from "@/components/ResumeBuilderNavbar";
 import { sendToWebhook } from "@/services/webhookService";
@@ -12,6 +12,8 @@ import DOMPurify from 'dompurify';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from '@/hooks/useSubscription';
+import { Link } from "react-router-dom";
 
 interface Message {
   id: string;
@@ -33,6 +35,31 @@ interface CollectedInfo {
   skills: { collected: boolean; data: any | null };
 }
 
+function DownloadCounter({ remainingDownloads, isFreeTier }: { remainingDownloads: number; isFreeTier: boolean }) {
+  if (!isFreeTier) return null;
+  
+  return (
+    <div className="flex items-center gap-2 text-sm bg-white/10 px-3 py-1.5 rounded-full">
+      <AlertTriangle className="h-4 w-4 text-white/70" />
+      {remainingDownloads === -1 ? (
+        <span className="text-white font-medium">
+          Unlimited downloads
+        </span>
+      ) : (
+        <span className={`font-medium ${
+          remainingDownloads === 0 
+            ? 'text-red-200' 
+            : remainingDownloads <= 1 
+              ? 'text-amber-200' 
+              : 'text-white'
+        }`}>
+          {remainingDownloads} download{remainingDownloads !== 1 ? 's' : ''} remaining
+        </span>
+      )}
+    </div>
+  );
+}
+
 const ResumeBuilder = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentInput, setCurrentInput] = useState("");
@@ -48,6 +75,12 @@ const ResumeBuilder = () => {
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string>("");
   const { user, session } = useAuth();
+  const { 
+    isFreeTier, 
+    checkDownloadLimit, 
+    recordDownload 
+  } = useSubscription();
+  const [remainingDownloads, setRemainingDownloads] = useState<number>(3);
 
   const quickOptions: QuickOption[] = [
     {
@@ -89,6 +122,26 @@ const ResumeBuilder = () => {
       }
     ]);
   }, [user, navigate]);
+
+  useEffect(() => {
+    async function fetchRemainingDownloads() {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .rpc('get_remaining_downloads', {
+            user_id: user.id
+          }) as { data: number | null; error: any };
+
+        if (error) throw error;
+        setRemainingDownloads(data ?? 3);
+      } catch (error) {
+        console.error('Error fetching remaining downloads:', error);
+      }
+    }
+
+    fetchRemainingDownloads();
+  }, [user]);
 
   const createNewSession = async () => {
     if (user) {
@@ -197,6 +250,15 @@ const ResumeBuilder = () => {
       handleSendMessage();
     }
   };
+  
+  const handleUpgradeClick = () => {
+    navigate('/');
+    setTimeout(() => {
+      const pricingSection = document.getElementById('pricing');
+      pricingSection?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
 
   const handleDownload = async () => {
     if (!resumeHtml) {
@@ -206,44 +268,131 @@ const ResumeBuilder = () => {
       return;
     }
 
+    if (!user) {
+      toast.error("Please sign in", {
+        description: "You need to be signed in to download your resume."
+      });
+      return;
+    }
+
     try {
       setIsThinking(true);
       
-      // Call the API endpoint to generate PDF
-      const response = await fetch('/api/generate-pdf', {
+      // Check download limits for free tier
+      const canDownload = await checkDownloadLimit();
+      if (!canDownload) {
+        toast.error("Download limit reached", {
+          description: (
+            <div className="space-y-2">
+              <p>You've used all your downloads for this month.</p>
+              <Button asChild variant="outline" size="sm" onClick={handleUpgradeClick}>
+                <span>Upgrade to Premium</span>
+              </Button>
+            </div>
+          )
+        });
+        return;
+      }
+      
+
+      const apiPort = 3001;
+      const apiUrl = `http://localhost:${apiPort}`;
+      
+      // First check if the server is available
+      try {
+        const healthCheck = await fetch(`${apiUrl}/api/health`, {
+          mode: 'cors',
+          credentials: 'include'
+        });
+        
+        if (!healthCheck.ok) {
+          throw new Error(`Resume preview service is not available (Status: ${healthCheck.status})`);
+        }
+      } catch (error) {
+        console.error('Health check failed:', error);
+        throw new Error('Could not connect to resume preview service. Please ensure the server is running.');
+      }
+
+      // Add watermark for free tier
+      let htmlToSend = resumeHtml;
+      if (isFreeTier) {
+        const watermark = `
+          <div style="
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            z-index: 1000;
+          ">
+            Created with Resume.Guru - Upgrade to remove watermark
+          </div>
+        `;
+        htmlToSend = resumeHtml.replace('</body>', `${watermark}</body>`);
+      }
+      
+      // Get the HTML preview
+      const response = await fetch(`${apiUrl}/api/preview-resume`, {
         method: 'POST',
+        mode: 'cors',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'text/html',
+          'Origin': window.location.origin
         },
-        body: JSON.stringify({ html: resumeHtml }),
+        body: JSON.stringify({ html: htmlToSend }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        throw new Error(`Failed to preview resume (Status: ${response.status})`);
       }
 
-      // Get the PDF blob
-      const pdfBlob = await response.blob();
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'resume.pdf';
-      
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Check content type to ensure we're getting HTML
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('text/html')) {
+        throw new Error('Invalid response format. Expected HTML content.');
+      }
 
-      toast.success("Resume downloaded successfully!", {
-        description: "Your professional resume has been downloaded as PDF."
-      });
+      // Get the HTML content
+      const htmlContent = await response.text();
+      
+      // Validate that we received HTML content
+      if (!htmlContent.trim().toLowerCase().startsWith('<!doctype html')) {
+        throw new Error('Invalid HTML content received from server');
+      }
+      
+      // Create a new window with the HTML content
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Record the download
+        await recordDownload('resume-' + new Date().toISOString());
+        
+        toast.success("Resume opened in new tab!", {
+          description: "Use Ctrl/Cmd + P to save as PDF or print."
+        });
+      } else {
+        throw new Error('Pop-up blocked. Please allow pop-ups for this site to download your resume.');
+      }
+
+      // After successful download, refresh remaining downloads
+      const { data: remainingData } = await supabase
+        .rpc('get_remaining_downloads', {
+          user_id: user.id
+        }) as { data: number | null; error: any };
+      
+      setRemainingDownloads(remainingData ?? 0);
+
     } catch (error) {
-      console.error('Error downloading resume:', error);
-      toast.error("Failed to download resume", {
-        description: "There was an error generating your PDF. Please try again."
+      console.error('Error previewing resume:', error);
+      toast.error("Failed to preview resume", {
+        description: error instanceof Error ? error.message : "There was an error generating your preview. Please try again."
       });
     } finally {
       setIsThinking(false);
@@ -378,23 +527,27 @@ const ResumeBuilder = () => {
             <Card className="h-[calc(100vh-160px)] flex flex-col overflow-hidden shadow-xl rounded-xl border-0">
               <div className="bg-gradient-to-r from-purple-600 to-pink-500 text-white p-4 flex items-center justify-between">
                 <h2 className="font-semibold">Your Resume</h2>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-transparent hover:bg-white/10 text-white border-white/20"
-                    onClick={handleReset}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-transparent hover:bg-white/10 text-white border-white/20"
-                    onClick={handleDownload}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
+                <DownloadCounter remainingDownloads={remainingDownloads} isFreeTier={isFreeTier} /> 
+
+                <div className="flex items-center space-x-4">
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="bg-transparent hover:bg-white/10 text-white border-white/20"
+                      onClick={handleReset}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="bg-transparent hover:bg-white/10 text-white border-white/20"
+                      onClick={handleDownload}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
               

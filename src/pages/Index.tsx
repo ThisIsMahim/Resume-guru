@@ -8,6 +8,7 @@ import HeroSection from "@/components/HeroSection";
 import FeatureSection from "@/components/FeatureSection";
 import PricingSection from "@/components/PricingSection";
 import ResumeBuilderNavbar from "@/components/ResumeBuilderNavbar";
+import AboutSection from "@/components/AboutSection";
 
 const Index = () => {
   const [isHovering, setIsHovering] = useState(false);
@@ -79,6 +80,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+      
+      {/* About Section */}
+      <AboutSection/>
       
       {/* Pricing Section */}
       <PricingSection />
