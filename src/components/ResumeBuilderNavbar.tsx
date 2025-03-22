@@ -181,7 +181,7 @@ const ResumeBuilderNavbar = () => {
               {isFreeTier ? (
                 <Button 
                   size="sm" 
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hidden md:block"
+                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hidden md:flex"
                   onClick={handleUpgradeClick}
                 >
                   <Crown className="h-4 w-4 mr-2" />
@@ -190,7 +190,7 @@ const ResumeBuilderNavbar = () => {
               ) : (
                 <Button 
                   size="sm" 
-                  className="bg-gradient-to-r from-pink-500 to-yellow-600 hover:cursor-default text-white shadow-md hover:shadow-lg transition-all duration-200 hidden md:block"
+                  className="bg-gradient-to-r from-pink-500 to-yellow-600 hover:cursor-default text-white shadow-md hover:shadow-lg transition-all duration-200 hidden md:flex"
                 >
                   <Crown className="h-4 w-4 mr-2" />
                   <span>Premium User</span>
