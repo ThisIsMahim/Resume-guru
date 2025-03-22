@@ -57,13 +57,31 @@ export const sendToWebhook = async (
       throw new Error(`Webhook responded with status: ${response.status}`);
     }
 
+    // Read response as text first
+    const responseText = await response.text();
+    console.log("Raw webhook response:", responseText);
+
+    // Check for empty response
+    if (!responseText.trim()) {
+      console.error("Empty response received from webhook");
+      return {
+        message: "The service returned an empty response. Please try again.",
+        error: "Empty response"
+      };
+    }
+
     let data;
     try {
-      data = await response.json();
+      data = JSON.parse(responseText);
       console.log("Webhook response:", data);
       
       // Handle array response from n8n
       const responseData = Array.isArray(data) ? data[0] : data;
+      
+      // Validate response data structure
+      if (!responseData || typeof responseData !== 'object') {
+        throw new Error('Invalid response format');
+      }
       
       return {
         message: responseData.message || "I apologize, but I didn't receive a proper response.",

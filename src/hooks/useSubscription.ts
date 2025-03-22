@@ -29,19 +29,16 @@ export function useSubscription() {
           .from('subscriptions')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching subscription:', error);
-          // If no subscription found, default to free tier
+          throw error;
+        }
+
+        if (data) {
           setSubscription({
-            tier: 'free',
-            active: true,
-            expiresAt: null
-          });
-        } else if (data) {
-          setSubscription({
-            tier: data.tier,
+            tier: data.tier as SubscriptionTier,
             active: data.active,
             expiresAt: data.expires_at ? new Date(data.expires_at) : null
           });
@@ -56,6 +53,12 @@ export function useSubscription() {
       } catch (err) {
         console.error('Error in subscription hook:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
+        // Set default free tier subscription even on error
+        setSubscription({
+          tier: 'free',
+          active: true,
+          expiresAt: null
+        });
       } finally {
         setLoading(false);
       }

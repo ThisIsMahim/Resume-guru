@@ -6,7 +6,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { 
   Send, Bot, User, Download, RefreshCw, FileText, 
-  AlertTriangle, HelpCircle, GraduationCap, Briefcase, Award 
+  AlertTriangle, HelpCircle, GraduationCap, Briefcase, Award, 
+  Layout
 } from "lucide-react";
 import { toast } from "sonner";
 import ResumeBuilderNavbar from "@/components/ResumeBuilderNavbar";
@@ -79,6 +80,7 @@ const ResumeBuilder = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [resumeHtml, setResumeHtml] = useState<string>("");
   const [showQuickOptions, setShowQuickOptions] = useState(true);
+  const [demoCvShown, setDemoCvShown] = useState(false);
   const [collectedInfo, setCollectedInfo] = useState<CollectedInfo>({
     personalInfo: { collected: false, data: null },
     education: { collected: false, data: null },
@@ -212,7 +214,7 @@ const ResumeBuilder = () => {
         .eq('session_id', sessionId)
         .eq('user_id', user?.id)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (error || !session) {
         // If session not found or error, clear storage and load new session
@@ -279,7 +281,7 @@ const ResumeBuilder = () => {
           .from('chat_sessions')
           .select('*')
           .eq('session_id', session.session_id)
-          .single();
+          .maybeSingle();
 
         if (sessionError) throw sessionError;
 
@@ -429,6 +431,11 @@ const ResumeBuilder = () => {
     const inputMessage = message || currentInput;
     if (inputMessage.trim() === "") return;
 
+    // Set demoCvShown if the demo CV prompt is sent
+    if (inputMessage === "Can you show me a demo resume for a software engineer? This will help me understand how to use the builder.") {
+      setDemoCvShown(true);
+    }
+
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       content: inputMessage,
@@ -562,9 +569,9 @@ const ResumeBuilder = () => {
       // For free tier users, show confirmation prompt
       if (isFreeTier && remainingDownloads > 0) {
         const confirmed = await new Promise((resolve) => {
-          toast.info(
+          const toastId = toast.info(
             <div className="space-y-3">
-              <p className="font-medium">You have {remainingDownloads} download{remainingDownloads !== 1 ? 's' : ''} remaining</p>
+              <p className="font-medium text-red-500">You have {remainingDownloads} download{remainingDownloads !== 1 ? 's' : ''} remaining</p>
               <p className="text-sm text-gray-500">Would you like the AI to refine your resume first? This won't use a download token.</p>
               <div className="flex gap-2 mt-2">
                 <Button
@@ -572,7 +579,7 @@ const ResumeBuilder = () => {
                   variant="outline"
                   className="w-full"
                   onClick={() => {
-                    handleSendMessage("Can you please review and refine my resume to make it more impactful?");
+                    toast.dismiss(toastId);
                     resolve(false);
                   }}
                 >
@@ -581,7 +588,10 @@ const ResumeBuilder = () => {
                 <Button
                   size="sm"
                   className="w-full bg-gradient-to-r from-pink-500 to-purple-600"
-                  onClick={() => resolve(true)}
+                  onClick={() => {
+                    toast.dismiss(toastId);
+                    resolve(true);
+                  }}
                 >
                   Download Now
                 </Button>
@@ -771,6 +781,16 @@ const ResumeBuilder = () => {
       }
     ];
 
+    // Only add demo CV option if it hasn't been shown
+    if (!demoCvShown) {
+      baseOptions.push({
+        id: 'demo-cv',
+        text: 'Show me a demo resume',
+        prompt: "Can you show me a demo resume for a software engineer? This will help me understand how to use the builder.",
+        icon: Layout
+      });
+    }
+
     // Dynamic options based on collected info
     const dynamicOptions: HelperOption[] = [];
 
@@ -822,7 +842,7 @@ const ResumeBuilder = () => {
 
   useEffect(() => {
     updateHelperOptions();
-  }, [messages, collectedInfo]);
+  }, [messages, collectedInfo, demoCvShown]);
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-50 to-pink-50">

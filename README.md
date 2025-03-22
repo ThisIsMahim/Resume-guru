@@ -1,20 +1,50 @@
 # ResumeGuru - AI-Powered Resume Builder
 
 <div align="center">
-  <img src="public/logo.png" alt="ResumeGuru Logo" width="200"/>
+  <img src="public/logo.png" alt="ResumeGuru Logo" width="400"/>
   <p><em>Transform your career journey with AI-powered resume creation</em></p>
 </div>
 
+## 📱 App Screenshots
+
+### Resume Builder Interface
+![Resume Builder Interface](screenshots/resume-builder.png)
+*Interactive AI chat interface with real-time resume preview*
+
+### Full Landing Page View
+![Full Application](screenshots/full-page.png)
+*Complete application interface*
+
+### Resume Templates
+![Resume Templates](screenshots/templates-page.png)
+*Professional resume templates to choose from*
+
 ## 🌟 Features
 
-- 🤖 AI-Powered Resume Generation
-- 📱 Modern, Responsive Design
-- 🎨 Professional Templates
-- 🔍 ATS-Optimized Content
-- 🔒 Secure Authentication
-- 📊 Real-time Preview
-- 💾 Auto-save Functionality
-- 📤 Multiple Export Formats
+- 🤖 **AI-Powered Resume Generation**
+  - Interactive chat interface for natural resume creation
+  - Smart information collection and organization
+  - Real-time resume preview as you chat
+
+- 📱 **Modern, Responsive Design**
+  - Beautiful gradient UI elements
+  - Smooth animations and transitions
+  - Mobile-friendly interface
+
+- 🎨 **Professional Templates**
+  - Multiple ATS-friendly templates
+  - Customizable designs
+  - Professional formatting
+
+- 🔒 **Secure & Reliable**
+  - Secure authentication
+  - Auto-save functionality
+  - Data encryption
+
+- 💾 **Smart Features**
+  - Progress tracking
+  - Helper suggestions
+  - Quick resume sections
 
 ## 🚀 Getting Started
 
@@ -76,7 +106,7 @@ resume-guru/
 └── n8n/              # n8n workflow configurations
 ```
 
-## 🔒 Security
+## 🔒 Security Features
 
 - End-to-end encryption for sensitive data
 - Secure authentication flow
@@ -93,17 +123,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-
-
 ## 🙏 Acknowledgments
 
 - [Supabase](https://supabase.com/) for authentication
 - [n8n](https://n8n.io/) for workflow automation
 - [shadcn/ui](https://ui.shadcn.com/) for beautiful UI components
-
-## 📞 Support
-
-For support, email support@resumeguru.com or join our Slack channel.
 
 ---
 
