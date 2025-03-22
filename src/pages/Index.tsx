@@ -9,6 +9,7 @@ import FeatureSection from "@/components/FeatureSection";
 import PricingSection from "@/components/PricingSection";
 import ResumeBuilderNavbar from "@/components/ResumeBuilderNavbar";
 import AboutSection from "@/components/AboutSection";
+import HelpSection from "@/components/HelpSection";
 
 const Index = () => {
   const [isHovering, setIsHovering] = useState(false);
@@ -111,41 +112,47 @@ const Index = () => {
         </div>
       </section>
       
+      {/* Help Section */}
+      <HelpSection />
+      
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gradient-to-r from-gray-900 via-purple-900 to-gray-900 text-white py-12">
         <div className="container mx-auto max-w-6xl px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">ResumeGuru</h3>
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                <img src="/favicon.ico" alt="ResumeGuru" className="w-8 h-8" />
+                <h3 className="text-xl font-bold">ResumeGuru</h3>
+              </div>
               <p className="text-gray-400">"Your career's best decision."</p>
             </div>
             <div>
               <h4 className="font-semibold mb-3">Product</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Features</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Templates</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Pricing</a></li>
+                <li><Link to="/resume-builder" className="text-gray-400 hover:text-white transition">Create Resume</Link></li>
+                <li><Link to="/upgrade" className="text-gray-400 hover:text-white transition">Premium Features</Link></li>
+                <li><Link to="/#pricing" className="text-gray-400 hover:text-white transition">Pricing</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-3">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition">About</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Contact</a></li>
+                <li><Link to="/#about" className="text-gray-400 hover:text-white transition">About</Link></li>
+                <li><Link to="/#help" className="text-gray-400 hover:text-white transition">Contact</Link></li>
+                <li><a href="mailto:support@resumeguru.com" className="text-gray-400 hover:text-white transition">Support</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-3">Legal</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Privacy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Terms</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition">Cookies</a></li>
+                <li><Link to="/privacy" className="text-gray-400 hover:text-white transition">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="text-gray-400 hover:text-white transition">Terms of Service</Link></li>
+                <li><Link to="/cookies" className="text-gray-400 hover:text-white transition">Cookie Policy</Link></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} ResumeGuru. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p className="text-gray-400">&copy; {new Date().getFullYear()} ResumeGuru. All rights reserved.</p>
           </div>
         </div>
       </footer>

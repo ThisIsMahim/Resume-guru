@@ -176,7 +176,7 @@ const PricingSection = () => {
                     variant={plan.popular ? "default" : "outline"}
                     asChild
                   >
-                    <Link to="/resume-builder">
+                    <Link to="/upgrade">
                       {plan.cta}
                     </Link>
                   </Button>
