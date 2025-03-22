@@ -1,7 +1,28 @@
+import { useState, useEffect } from "react";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const AboutSection = () => {
+  const [totalDownloads, setTotalDownloads] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchTotalDownloads = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('downloads')
+          .select('*', { count: 'exact', head: true });
+
+        if (error) throw error;
+        setTotalDownloads(count || 0);
+      } catch (error) {
+        console.error('Error fetching total downloads:', error);
+      }
+    };
+
+    fetchTotalDownloads();
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -98,7 +119,11 @@ const AboutSection = () => {
                 variants={statVariants}
                 whileHover={{ scale: 1.05 }}
               >
-                <h4 className="text-3xl font-bold text-purple-600">50K+</h4>
+                <h4 className="text-3xl font-bold text-purple-600">
+                  {totalDownloads > 1000 
+                    ? `${(totalDownloads / 1000).toFixed(1)}K+` 
+                    : `${totalDownloads}+`}
+                </h4>
                 <p className="text-sm text-gray-600">Resumes Created</p>
               </motion.div>
               <motion.div 
@@ -106,7 +131,7 @@ const AboutSection = () => {
                 variants={statVariants}
                 whileHover={{ scale: 1.05 }}
               >
-                <h4 className="text-3xl font-bold text-pink-600">92%</h4>
+                <h4 className="text-3xl font-bold text-pink-600">100%</h4>
                 <p className="text-sm text-gray-600">Success Rate</p>
               </motion.div>
             </motion.div>

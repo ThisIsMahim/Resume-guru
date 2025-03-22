@@ -117,21 +117,12 @@ const Templates = () => {
         <div className="container mx-auto max-w-6xl">
           <Tabs defaultValue="free" className="space-y-8">
             <div className="flex justify-between items-center">
-            <div className="flex items-center justify-center space-x-4 w-full bg-transparent">
+            <div className="flex items-center justify-center space-x-6 w-full bg-transparent">
             <TabsList className="bg-white/50">
-                <TabsTrigger value="free">Free Templates</TabsTrigger>
-                <TabsTrigger value="premium">Premium Templates</TabsTrigger>
+                <TabsTrigger value="free" className="text-xl">Free Templates</TabsTrigger>
+                <TabsTrigger value="premium" className="text-xl">Premium Templates</TabsTrigger>
               </TabsList>
               </div>
-              
-              {!isPremiumTier && (
-                <Button className="bg-gradient-to-r from-purple-600 to-pink-600" asChild>
-                  <Link to="/upgrade">
-                    <Crown className="w-4 h-4 mr-2" />
-                    Upgrade to Premium
-                  </Link>
-                </Button>
-              )}
             </div>
 
             <TabsContent value="free" className="space-y-8">

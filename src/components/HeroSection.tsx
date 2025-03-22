@@ -3,28 +3,44 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ResumePreview from "@/components/ResumePreview";
+import { useEffect, useState } from "react";
 
 const HeroSection = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const particleCount = isMobile ? 5 : 20;
+
   return (
-    <section className="relative py-20 overflow-hidden bg-gradient-to-br from-[#ffecd2] via-[#fcb69f] to-[#ffdde1] -mt-12">
+    <section id="hero" className="relative py-20 overflow-hidden bg-gradient-to-br from-[#ffecd2] via-[#fcb69f] to-[#ffecd2] -mt-12">
       {/* Animated background elements */}
       <div className="absolute inset-0 z-0">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(particleCount)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute rounded-lg bg-white/20 backdrop-blur-sm"
             style={{
-              width: Math.random() * 100 + 50,
-              height: Math.random() * 100 + 50,
+              width: isMobile ? Math.random() * 50 + 25 : Math.random() * 100 + 50,
+              height: isMobile ? Math.random() * 50 + 25 : Math.random() * 100 + 50,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
             animate={{
-              y: [0, Math.random() * 40 - 20],
-              opacity: [0.1, 0.3, 0.1],
+              y: isMobile ? [0, Math.random() * 20 - 10] : [0, Math.random() * 40 - 20],
+              opacity: [0.1, 0.2, 0.1],
             }}
             transition={{
-              duration: Math.random() * 5 + 5,
+              duration: isMobile ? Math.random() * 3 + 3 : Math.random() * 5 + 5,
               repeat: Infinity,
               repeatType: "reverse",
             }}

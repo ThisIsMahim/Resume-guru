@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, FileText, Info, HelpCircle, User, LogOut, Download, Crown } from "lucide-react";
+import { Home, FileText, Info, HelpCircle, User, LogOut, Download, Crown, Menu, X, Layout } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -18,6 +18,7 @@ const ResumeBuilderNavbar = () => {
   const { user, signOut } = useAuth();
   const { isFreeTier } = useSubscription();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -31,68 +32,113 @@ const ResumeBuilderNavbar = () => {
     navigate('/upgrade');
   };
 
+  const NavItems = () => (
+    <>
+      <Link 
+        to="/#hero" 
+        className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
+        onClick={(e) => {
+          e.preventDefault();
+          setIsMobileMenuOpen(false);
+          const currentPath = window.location.pathname;
+          
+          if (currentPath === '/') {
+            document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            navigate('/?scrollTo=hero');
+            setTimeout(() => {
+              document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }
+        }}
+      >
+        <Home className="h-4 w-4" />
+        <span>Home</span>
+      </Link>
+      <Link 
+        to="/templates" 
+        className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Layout className="h-4 w-4" />
+        <span>Templates</span>
+      </Link>
+      <a 
+        href="#about" 
+        className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
+        onClick={(e) => {
+          e.preventDefault();
+          setIsMobileMenuOpen(false);
+          const currentPath = window.location.pathname;
+          
+          if (currentPath === '/') {
+            document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            navigate('/');
+            setTimeout(() => {
+              document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }
+        }}
+      >
+        <Info className="h-4 w-4" />
+        <span>About</span>
+      </a>
+      <Link 
+        to="/#help" 
+        className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
+        onClick={(e) => {
+          e.preventDefault();
+          setIsMobileMenuOpen(false);
+          const currentPath = window.location.pathname;
+          
+          if (currentPath === '/') {
+            document.getElementById('help')?.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            navigate('/?scrollTo=help');
+            setTimeout(() => {
+              document.getElementById('help')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }
+        }}
+      >
+        <HelpCircle className="h-4 w-4" />
+        <span>Help</span>
+      </Link>
+    </>
+  );
+
   return (
     <nav className="bg-white/60 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <Link to="/" className="flex items-center space-x-2">
-          <FileText className="h-6 w-6 bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent" />
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mr-2"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
+       
+        <Link to="/" className="flex items-center space-x-2 ">
           <span className="font-bold text-xl bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
             ResumeGuru
           </span>
         </Link>
         
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
-          <Link 
-            to="/" 
-            className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
-          >
-            <Home className="h-4 w-4" />
-            <span>Home</span>
-          </Link>
-          <a 
-            href="#about" 
-            className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
-            onClick={(e) => {
-              e.preventDefault();
-              const currentPath = window.location.pathname;
-              
-              if (currentPath === '/') {
-                // If already on home page, just scroll
-                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                // If on another page, navigate to home page first, then scroll after a small delay
-                navigate('/');
-                setTimeout(() => {
-                  document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
-            }}
-          >
-            <Info className="h-4 w-4" />
-            <span>About</span>
-          </a>
-          <Link 
-            to="/#help" 
-            className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
-            onClick={(e) => {
-              e.preventDefault();
-              const currentPath = window.location.pathname;
-              
-              if (currentPath === '/') {
-                document.getElementById('help')?.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                navigate('/?scrollTo=help');
-                setTimeout(() => {
-                  document.getElementById('help')?.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
-            }}
-          >
-            <HelpCircle className="h-4 w-4" />
-            <span>Help</span>
-          </Link>
+          <NavItems />
         </div>
-        
+
+
         <div className="flex items-center space-x-4">
           {user ? (
             <>
@@ -109,7 +155,7 @@ const ResumeBuilderNavbar = () => {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.email}</p>
-                      {isFreeTier? <p className="text-xs leading-none text-muted-foreground">Free Plan</p> : <p className="text-xs leading-none text-muted-foreground">Premium Plan</p>}
+                      {isFreeTier ? <p className="text-xs leading-none text-muted-foreground">Free Plan</p> : <p className="text-xs leading-none text-muted-foreground">Premium Plan</p>}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -132,22 +178,24 @@ const ResumeBuilderNavbar = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {isFreeTier?(
+              {isFreeTier ? (
                 <Button 
                   size="sm" 
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hidden md:block"
                   onClick={handleUpgradeClick}
                 >
                   <Crown className="h-4 w-4 mr-2" />
                   <span>Upgrade</span>
                 </Button>
-              ):(<Button 
-                size="sm" 
-                className="bg-gradient-to-r from-pink-500 to-yellow-600 hover:cursor-default text-white shadow-md hover:shadow-lg transition-all duration-200"
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                <span>Premium User</span>
-              </Button>)}
+              ) : (
+                <Button 
+                  size="sm" 
+                  className="bg-gradient-to-r from-pink-500 to-yellow-600 hover:cursor-default text-white shadow-md hover:shadow-lg transition-all duration-200 hidden md:block"
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  <span>Premium User</span>
+                </Button>
+              )}
             </>
           ) : (
             <Link to="/auth">
@@ -158,6 +206,15 @@ const ResumeBuilderNavbar = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-100 py-4 px-4 shadow-lg">
+          <div className="flex flex-col space-y-4">
+            <NavItems />
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
