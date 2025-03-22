@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Send, Bot, User, Download, RefreshCw, PaperclipIcon, FileText, AlertTriangle } from "lucide-react";
+import { 
+  Send, Bot, User, Download, RefreshCw, FileText, 
+  AlertTriangle, HelpCircle, GraduationCap, Briefcase, Award 
+} from "lucide-react";
 import { toast } from "sonner";
 import ResumeBuilderNavbar from "@/components/ResumeBuilderNavbar";
 import { sendToWebhook } from "@/services/webhookService";
@@ -14,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from '@/hooks/useSubscription';
 import { Link } from "react-router-dom";
+import { format } from 'date-fns';
 
 interface Message {
   id: string;
@@ -28,12 +32,21 @@ interface QuickOption {
   prompt: string;
 }
 
+interface HelperOption {
+  id: string;
+  text: string;
+  prompt: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
 interface CollectedInfo {
   personalInfo: { collected: boolean; data: any | null };
   education: { collected: boolean; data: any | null };
   experience: { collected: boolean; data: any | null };
   skills: { collected: boolean; data: any | null };
 }
+
+const SESSION_STORAGE_KEY = 'resumeGuru_lastSessionId';
 
 function DownloadCounter({ remainingDownloads, isFreeTier }: { remainingDownloads: number; isFreeTier: boolean }) {
   if (!isFreeTier) return null;
@@ -81,6 +94,7 @@ const ResumeBuilder = () => {
     recordDownload 
   } = useSubscription();
   const [remainingDownloads, setRemainingDownloads] = useState<number>(3);
+  const [currentHelperOptions, setCurrentHelperOptions] = useState<HelperOption[]>([]);
 
   const quickOptions: QuickOption[] = [
     {
@@ -111,16 +125,15 @@ const ResumeBuilder = () => {
       return;
     }
 
-    createNewSession();
-    // Add initial welcome message
-    setMessages([
-      {
-        id: "welcome",
-        content: "Hi! I'm your ResumeGuru AI assistant. I'll help you create a professional resume. Tell me about yourself and what kind of resume you'd like to create.",
-        sender: "ai",
-        timestamp: new Date()
-      }
-    ]);
+    // Try to restore last session ID from storage
+    const lastSessionId = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (lastSessionId) {
+      // Verify if session is still valid
+      verifyAndRestoreSession(lastSessionId);
+    } else {
+      // If no stored session, load or create new one
+      loadExistingSession();
+    }
   }, [user, navigate]);
 
   useEffect(() => {
@@ -143,27 +156,260 @@ const ResumeBuilder = () => {
     fetchRemainingDownloads();
   }, [user]);
 
-  const createNewSession = async () => {
-    if (user) {
-      const newSessionId = `session_${user.id}_${Date.now()}`;
-      setSessionId(newSessionId);
-      
-      // Store session in Supabase
-      try {
-        const { error } = await supabase
-          .from('chat_sessions')
-          .insert({
-            session_id: newSessionId,
-            user_id: user.id,
-            status: 'active',
-            memory_data: null
-          });
-
-        if (error) throw error;
-      } catch (error) {
-        console.error('Error creating chat session:', error);
-        toast.error('Failed to initialize chat session');
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      if (sessionId) {
+        try {
+          await supabase
+            .from('chat_sessions')
+            .update({ 
+              status: 'inactive',
+              updated_at: new Date().toISOString()
+            })
+            .eq('session_id', sessionId);
+        } catch (error) {
+          console.error('Error updating session status:', error);
+        }
       }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Also mark session as inactive when component unmounts
+      handleBeforeUnload();
+    };
+  }, [sessionId]);
+
+  const manageSession = async () => {
+    if (!user) return;
+
+    try {
+      // Try to get or create an active session
+      const { data: sessionData, error } = await supabase
+        .rpc('manage_user_sessions', {
+          p_user_id: user.id
+        });
+
+      if (error) throw error;
+
+      if (sessionData) {
+        setSessionId(sessionData);
+        return sessionData;
+      }
+    } catch (error) {
+      console.error('Error managing session:', error);
+      toast.error('Failed to manage session');
+    }
+  };
+
+  const verifyAndRestoreSession = async (sessionId: string) => {
+    try {
+      const { data: session, error } = await supabase
+        .from('chat_sessions')
+        .select('*')
+        .eq('session_id', sessionId)
+        .eq('user_id', user?.id)
+        .eq('status', 'active')
+        .single();
+
+      if (error || !session) {
+        // If session not found or error, clear storage and load new session
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        await loadExistingSession();
+        return;
+      }
+
+      // Restore session state
+      setSessionId(session.session_id);
+      if (session.memory_data) {
+        setCollectedInfo(session.memory_data);
+      }
+      if (session.memory_data?.resumeHtml) {
+        setResumeHtml(DOMPurify.sanitize(session.memory_data.resumeHtml));
+      }
+
+      // Load messages
+      const { data: messages, error: messagesError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', session.session_id)
+        .order('created_at', { ascending: true });
+
+      if (messagesError) throw messagesError;
+
+      if (messages && messages.length > 0) {
+        setMessages(messages.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sender: msg.sender,
+          timestamp: new Date(msg.created_at)
+        })));
+        setShowQuickOptions(false);
+      }
+    } catch (error) {
+      console.error('Error verifying session:', error);
+      await loadExistingSession();
+    }
+  };
+
+  const loadExistingSession = async () => {
+    if (!user) return;
+
+    try {
+      const { data: sessions, error } = await supabase
+        .from('chat_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (sessions && sessions.length > 0) {
+        const session = sessions[0];
+        setSessionId(session.session_id);
+        // Store session ID in storage
+        sessionStorage.setItem(SESSION_STORAGE_KEY, session.session_id);
+        
+        // Get session data
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('chat_sessions')
+          .select('*')
+          .eq('session_id', session.session_id)
+          .single();
+
+        if (sessionError) throw sessionError;
+
+        if (sessionData) {
+          // Set session data
+          if (sessionData.memory_data) {
+            setCollectedInfo(sessionData.memory_data);
+          }
+          if (sessionData.resume_html) {
+            setResumeHtml(DOMPurify.sanitize(sessionData.resume_html));
+          }
+
+          // Load messages for this session
+          const { data: messages, error: messagesError } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('session_id', sessionData.session_id)
+            .order('created_at', { ascending: true });
+
+          if (messagesError) throw messagesError;
+
+          if (messages && messages.length > 0) {
+            setMessages(messages.map(msg => ({
+              id: msg.id,
+              content: msg.content,
+              sender: msg.sender,
+              timestamp: new Date(msg.created_at)
+            })));
+            setShowQuickOptions(false);
+          } else {
+            // Add welcome message for new sessions
+            const welcomeMessage = {
+              id: "welcome",
+              content: "Hi! I'm your ResumeGuru AI assistant. I'll help you create a professional resume. Tell me about yourself and what kind of resume you'd like to create.",
+              sender: "ai" as const,
+              timestamp: new Date()
+            };
+            setMessages([welcomeMessage]);
+            await saveMessage(welcomeMessage.content, welcomeMessage.sender);
+          }
+        }
+      } else {
+        await createNewSession();
+      }
+    } catch (error) {
+      console.error('Error loading session:', error);
+      toast.error('Failed to load session');
+    }
+  };
+
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        const storedSessionId = sessionStorage.getItem(SESSION_STORAGE_KEY);
+        if (storedSessionId && storedSessionId !== sessionId) {
+          await verifyAndRestoreSession(storedSessionId);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [sessionId, user]);
+
+  const createNewSession = async () => {
+    if (!user) return;
+    
+    try {
+      const sessionId = crypto.randomUUID();
+      const { error } = await supabase
+        .from('chat_sessions')
+        .insert({
+          session_id: sessionId,
+          user_id: user.id,
+          status: 'active',
+          memory_data: null
+        });
+
+      if (error) throw error;
+      
+      setSessionId(sessionId);
+      // Store session ID in storage
+      sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+
+      // Add welcome message
+      const welcomeMessage = {
+        id: "welcome",
+        content: "Hi! I'm your ResumeGuru AI assistant. I'll help you create a professional resume. Tell me about yourself and what kind of resume you'd like to create.",
+        sender: "ai" as const,
+        timestamp: new Date()
+      };
+      setMessages([welcomeMessage]);
+      await saveMessage(welcomeMessage.content, welcomeMessage.sender);
+
+      return sessionId;
+    } catch (error) {
+      console.error('Error creating chat session:', error);
+      toast.error('Failed to initialize chat session');
+    }
+  };
+
+  const saveMessage = async (content: string, sender: 'ai' | 'user') => {
+    if (!sessionId) return;
+
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          session_id: sessionId,
+          content: content,
+          sender: sender,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Update session's updated_at timestamp
+      await supabase
+        .from('chat_sessions')
+        .update({ 
+          updated_at: new Date().toISOString()
+        })
+        .eq('session_id', sessionId);
+
+    } catch (error) {
+      console.error('Error saving message:', error);
+      toast.error('Failed to save message');
     }
   };
 
@@ -190,11 +436,13 @@ const ResumeBuilder = () => {
       timestamp: new Date()
     };
     
-    setMessages(prev => [...prev, userMessage]);
-    setCurrentInput("");
-    setIsThinking(true);
-
     try {
+      // Save user message
+      await saveMessage(userMessage.content, userMessage.sender);
+      setMessages(prev => [...prev, userMessage]);
+      setCurrentInput("");
+      setIsThinking(true);
+
       const response = await sendToWebhook(inputMessage, sessionId);
       
       const aiMessage: Message = {
@@ -203,7 +451,9 @@ const ResumeBuilder = () => {
         sender: "ai",
         timestamp: new Date()
       };
-      
+
+      // Save AI message
+      await saveMessage(aiMessage.content, aiMessage.sender);
       setMessages(prev => [...prev, aiMessage]);
       
       if (response.collectedInfo) {
@@ -226,7 +476,26 @@ const ResumeBuilder = () => {
       }
       
       if (response.resumeHtml) {
-        setResumeHtml(DOMPurify.sanitize(response.resumeHtml));
+        const sanitizedHtml = DOMPurify.sanitize(response.resumeHtml);
+        setResumeHtml(sanitizedHtml);
+        
+        try {
+          const { error } = await supabase
+            .from('chat_sessions')
+            .update({
+              memory_data: {
+                ...response.collectedInfo,
+                resumeHtml: sanitizedHtml
+              },
+              resume_html: sanitizedHtml,
+              updated_at: new Date().toISOString()
+            })
+            .eq('session_id', sessionId);
+
+          if (error) throw error;
+        } catch (error) {
+          console.error('Error updating chat session:', error);
+        }
       }
       
       if (response.error) {
@@ -252,11 +521,7 @@ const ResumeBuilder = () => {
   };
   
   const handleUpgradeClick = () => {
-    navigate('/');
-    setTimeout(() => {
-      const pricingSection = document.getElementById('pricing');
-      pricingSection?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    navigate('/upgrade');
   };
 
 
@@ -293,7 +558,47 @@ const ResumeBuilder = () => {
         });
         return;
       }
-      
+
+      // For free tier users, show confirmation prompt
+      if (isFreeTier && remainingDownloads > 0) {
+        const confirmed = await new Promise((resolve) => {
+          toast.info(
+            <div className="space-y-3">
+              <p className="font-medium">You have {remainingDownloads} download{remainingDownloads !== 1 ? 's' : ''} remaining</p>
+              <p className="text-sm text-gray-500">Would you like the AI to refine your resume first? This won't use a download token.</p>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    handleSendMessage("Can you please review and refine my resume to make it more impactful?");
+                    resolve(false);
+                  }}
+                >
+                  Refine First
+                </Button>
+                <Button
+                  size="sm"
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-600"
+                  onClick={() => resolve(true)}
+                >
+                  Download Now
+                </Button>
+              </div>
+            </div>,
+            {
+              duration: 10000,
+              onDismiss: () => resolve(false)
+            }
+          );
+        });
+
+        if (!confirmed) {
+          setIsThinking(false);
+          return;
+        }
+      }
 
       const apiPort = 3001;
       const apiUrl = `http://localhost:${apiPort}`;
@@ -372,7 +677,15 @@ const ResumeBuilder = () => {
         printWindow.document.close();
         
         // Record the download
-        await recordDownload('resume-' + new Date().toISOString());
+        await supabase
+          .from('downloads')
+          .insert({
+            user_id: user.id,
+            resume_name: 'Resume ' + format(new Date(), 'PPP'),
+            format: 'HTML/PDF',
+            resume_html: resumeHtml,
+            created_at: new Date().toISOString()
+          });
         
         toast.success("Resume opened in new tab!", {
           description: "Use Ctrl/Cmd + P to save as PDF or print."
@@ -400,15 +713,23 @@ const ResumeBuilder = () => {
   };
 
   const handleReset = async () => {
-    await createNewSession();
-    setMessages([
-      {
-        id: "welcome-reset",
-        content: "Let's start fresh! Tell me about yourself and what kind of resume you'd like to create.",
-        sender: "ai",
-        timestamp: new Date()
+    // Mark current session as completed
+    if (sessionId) {
+      try {
+        await supabase
+          .from('chat_sessions')
+          .update({ 
+            status: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('session_id', sessionId);
+      } catch (error) {
+        console.error('Error completing current session:', error);
       }
-    ]);
+    }
+
+    // Create new session
+    await createNewSession();
     setResumeHtml("");
   };
 
@@ -417,6 +738,91 @@ const ResumeBuilder = () => {
     const completedSections = sections.filter(section => section.collected).length;
     return (completedSections / sections.length) * 100;
   };
+
+  const endSession = async () => {
+    if (!sessionId) return;
+    
+    try {
+      await supabase
+        .from('chat_sessions')
+        .update({ 
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('session_id', sessionId);
+    } catch (error) {
+      console.error('Error ending session:', error);
+    }
+  };
+
+  const updateHelperOptions = () => {
+    const baseOptions: HelperOption[] = [
+      {
+        id: 'what-now',
+        text: 'What should I tell you now?',
+        prompt: "I'm not sure what information you need next. Can you guide me?",
+        icon: HelpCircle
+      },
+      {
+        id: 'generate-resume',
+        text: 'Generate my resume',
+        prompt: "Can you generate my resume with the information I've provided so far?",
+        icon: FileText
+      }
+    ];
+
+    // Dynamic options based on collected info
+    const dynamicOptions: HelperOption[] = [];
+
+    if (!collectedInfo.personalInfo.collected) {
+      dynamicOptions.push({
+        id: 'personal-info',
+        text: 'Add personal details',
+        prompt: "I'd like to add my personal information (name, contact, etc.)",
+        icon: User
+      });
+    }
+
+    if (!collectedInfo.education.collected) {
+      dynamicOptions.push({
+        id: 'education',
+        text: 'Add education',
+        prompt: "I want to add my educational background",
+        icon: GraduationCap
+      });
+    }
+
+    if (!collectedInfo.experience.collected) {
+      dynamicOptions.push({
+        id: 'experience',
+        text: 'Add work experience',
+        prompt: "I'd like to add my work experience",
+        icon: Briefcase
+      });
+    }
+
+    if (!collectedInfo.skills.collected) {
+      dynamicOptions.push({
+        id: 'skills',
+        text: 'Add skills',
+        prompt: "I want to add my skills and expertise",
+        icon: Award
+      });
+    }
+
+    // Combine and shuffle dynamic options to keep it fresh
+    const shuffledDynamic = dynamicOptions.sort(() => Math.random() - 0.5);
+    
+    // Always keep base options and add 1-2 dynamic options
+    setCurrentHelperOptions([
+      ...baseOptions,
+      ...shuffledDynamic.slice(0, 2)
+    ]);
+  };
+
+  useEffect(() => {
+    updateHelperOptions();
+  }, [messages, collectedInfo]);
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-50 to-pink-50">
@@ -502,6 +908,23 @@ const ResumeBuilder = () => {
               </div>
               
               <div className="border-t p-4 bg-gray-50">
+                {/* Helper Options */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {currentHelperOptions.map((option) => (
+                    <Button
+                      key={option.id}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs bg-white/50 hover:bg-pink-50 text-gray-600 hover:text-pink-600 border border-gray-200"
+                      onClick={() => handleSendMessage(option.prompt)}
+                    >
+                      {option.icon && <option.icon className="h-3 w-3 mr-1" />}
+                      {option.text}
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Existing text area and send button */}
                 <div className="flex items-center">
                   <textarea
                     value={currentInput}
