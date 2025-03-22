@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Auth from "./pages/Auth";
 import Profile from '@/pages/Profile';
 import UpgradePlan from "@/pages/UpgradePlan";
+import Templates from "@/pages/Templates";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/upgrade" element={<UpgradePlan />} />
+            <Route path="/templates" element={<Templates />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

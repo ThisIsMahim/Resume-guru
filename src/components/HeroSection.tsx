@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -67,7 +66,7 @@ const HeroSection = () => {
                 className="bg-white/70 backdrop-blur-sm hover:bg-white/90 border-gray-300 rounded-xl"
                 asChild
               >
-                <Link to="/resume-builder">
+                <Link to="/templates">
                   View Templates
                 </Link>
               </Button>
