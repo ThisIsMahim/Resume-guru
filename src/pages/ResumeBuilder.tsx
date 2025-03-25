@@ -315,7 +315,7 @@ const ResumeBuilder = () => {
             // Add welcome message for new sessions
             const welcomeMessage = {
               id: "welcome",
-              content: "Hi! I'm your ResumeGuru AI assistant. I'll help you create a professional resume. Tell me about yourself and what kind of resume you'd like to create.",
+              content: "👋 Hi! I'm Mark, your ResumeGuru AI assistant. Through my 'Resume Enlightenment' approach, I've helped many people transform their careers.Just say a quick hello or choose one of the quick options below, and together we'll craft your career masterpiece! 🌟",
               sender: "ai" as const,
               timestamp: new Date()
             };
@@ -372,7 +372,7 @@ const ResumeBuilder = () => {
       // Add welcome message
       const welcomeMessage = {
         id: "welcome",
-        content: "Hi! I'm your ResumeGuru AI assistant. I'll help you create a professional resume. Tell me about yourself and what kind of resume you'd like to create.",
+        content: "👋 Hi! I'm Mark, your ResumeGuru AI assistant. Through my 'Resume Enlightenment' approach, I've helped thousands transform their careers. Say hello or choose one of the quick options below, and together we'll craft your career masterpiece! 🌟",
         sender: "ai" as const,
         timestamp: new Date()
       };

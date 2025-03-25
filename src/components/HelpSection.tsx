@@ -23,7 +23,7 @@ export default function HelpSection() {
       // Send the user's message
       await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        'template_contact',
+        'template_xsqjx5h',
         {
           from_name: formData.name,
           from_email: formData.email,
@@ -35,7 +35,7 @@ export default function HelpSection() {
       // Send auto-reply
       await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        'template_auto_reply',
+        'template_xsqjx5h',
         {
           to_name: formData.name,
           to_email: formData.email,

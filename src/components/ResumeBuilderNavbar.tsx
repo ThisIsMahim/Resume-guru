@@ -35,6 +35,13 @@ const ResumeBuilderNavbar = () => {
   const NavItems = () => (
     <>
       <Link 
+        to="/resume-builder"
+        className="hidden md:flex items-center space-x-1 font-medium bg-gradient-to-r from-purple-600 to-blue-500 text-white px-3 py-1.5 rounded-md animate-glow hover:shadow-lg transition-all duration-200 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:-translate-x-full hover:before:translate-x-full before:transition-transform before:duration-700"
+      >
+        <FileText className="h-4 w-4" />
+        <span>AI Builder</span>
+      </Link>
+      <Link 
         to="/#hero" 
         className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors font-medium"
         onClick={(e) => {
@@ -211,6 +218,14 @@ const ResumeBuilderNavbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-100 py-4 px-4 shadow-lg">
           <div className="flex flex-col space-y-4">
+            <Link 
+              to="/resume-builder"
+              className="flex items-center space-x-1 font-medium bg-gradient-to-r from-purple-600 to-blue-500 text-white px-3 py-1.5 rounded-md animate-glow hover:shadow-lg transition-all duration-200 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:-translate-x-full hover:before:translate-x-full before:transition-transform before:duration-700 w-fit"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <FileText className="h-4 w-4" />
+              <span>AI Builder</span>
+            </Link>
             <NavItems />
           </div>
         </div>
