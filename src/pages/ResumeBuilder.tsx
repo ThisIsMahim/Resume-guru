@@ -81,6 +81,7 @@ const ResumeBuilder = () => {
   const [resumeHtml, setResumeHtml] = useState<string>("");
   const [showQuickOptions, setShowQuickOptions] = useState(true);
   const [demoCvShown, setDemoCvShown] = useState(false);
+  const [showShine, setShowShine] = useState(false);
   const [collectedInfo, setCollectedInfo] = useState<CollectedInfo>({
     personalInfo: { collected: false, data: null },
     education: { collected: false, data: null },
@@ -485,6 +486,9 @@ const ResumeBuilder = () => {
       if (response.resumeHtml) {
         const sanitizedHtml = DOMPurify.sanitize(response.resumeHtml);
         setResumeHtml(sanitizedHtml);
+        setShowShine(true);
+        // Reset shine after animation
+        setTimeout(() => setShowShine(false), 1000);
         
         try {
           const { error } = await supabase
@@ -967,7 +971,40 @@ const ResumeBuilder = () => {
           </div>
           
           <div className="lg:col-span-1">
-            <Card className="h-[calc(100vh-160px)] flex flex-col overflow-hidden shadow-xl rounded-xl border-0">
+            <Card className={`h-[calc(100vh-160px)] flex flex-col overflow-hidden shadow-xl rounded-xl border-0 relative ${showShine ? 'animate-shine' : ''}`}>
+              <style>
+                {`
+                  @keyframes shine {
+                    0% {
+                      transform: translateX(-100%);
+                    }
+                    100% {
+                      transform: translateX(100%);
+                    }
+                  }
+                  .animate-shine::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                      90deg,
+                      transparent 0%,
+                      rgba(255, 255, 255, 0.6) 50%,
+                      transparent 100%
+                    );
+                    animation: shine 1s ease-in-out;
+                    pointer-events: none;
+                    z-index: 50;
+                  }
+                  .animate-shine > * {
+                    position: relative;
+                    z-index: 1;
+                  }
+                `}
+              </style>
               <div className="bg-gradient-to-r from-purple-600 to-pink-500 text-white p-4 flex items-center justify-between">
                 <h2 className="font-semibold">Your Resume</h2>
                 <DownloadCounter remainingDownloads={remainingDownloads} isFreeTier={isFreeTier} /> 
