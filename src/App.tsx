@@ -12,6 +12,8 @@ import Auth from "./pages/Auth";
 import Profile from '@/pages/Profile';
 import UpgradePlan from "@/pages/UpgradePlan";
 import Templates from "@/pages/Templates";
+import Privacy from "@/pages/Privacy";
+import Terms from "@/pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,8 @@ const App = () => (
             } />
             <Route path="/upgrade" element={<UpgradePlan />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/tos" element={<Terms />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

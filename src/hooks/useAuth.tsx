@@ -8,6 +8,7 @@ interface AuthContextType {
   session: Session | null;
   signUp: (email: string, password: string, metadata?: { [key: string]: any }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
 }
@@ -80,6 +81,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/resume-builder`,
+        queryParams: {
+          site_name: 'Resume Guru'
+        }
+      }
+    });
+
+    if (error) {
+      console.error("Google sign in error:", error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -93,6 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     session,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     loading,
   };
