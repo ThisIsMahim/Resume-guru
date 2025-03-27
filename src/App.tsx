@@ -57,7 +57,7 @@ const App = () => (
             <Route path="/upgrade" element={<UpgradePlan />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/privacy" element={<Privacy />} />
-            <Route path="/tos" element={<Terms />} />
+            <Route path="/terms" element={<Terms />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
