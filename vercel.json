@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "builds": [
     {
       "src": "api/**/*.js",
@@ -8,7 +10,10 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "zeroConfig": true }
+      "config": { 
+        "zeroConfig": true,
+        "framework": "vite"
+      }
     }
   ],
   "routes": [
@@ -22,6 +27,10 @@
     },
     {
       "handle": "filesystem"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
     },
     {
       "src": "/(.*)",

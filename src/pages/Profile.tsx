@@ -71,8 +71,7 @@ export default function Profile() {
 
   const handlePreview = async (download: Download) => {
     try {
-      const apiPort = 3001;
-      const apiUrl = `http://localhost:${apiPort}`;
+      const apiUrl = import.meta.env.VITE_API_URL;
       
       // First check if the server is available
       const healthCheck = await fetch(`${apiUrl}/api/health`, {

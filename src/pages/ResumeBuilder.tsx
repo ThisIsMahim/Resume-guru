@@ -614,8 +614,8 @@ const ResumeBuilder = () => {
         }
       }
 
-      const apiPort = 3001;
-      const apiUrl = `http://localhost:${apiPort}`;
+      // Use environment variable for API URL
+      const apiUrl = import.meta.env.VITE_API_URL;
       
       // First check if the server is available
       try {

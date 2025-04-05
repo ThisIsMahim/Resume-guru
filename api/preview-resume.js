@@ -6,16 +6,26 @@ dotenv.config();
 
 // Configure CORS with specific options
 const corsOptions = {
-  origin: true, // Allow all origins
+  origin: '*', // Allow all origins in development
   methods: ['POST', 'GET', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Origin'],
+  allowedHeaders: ['Content-Type', 'Origin', 'Accept'],
   credentials: true,
   maxAge: 86400 // Cache preflight request for 24 hours
 };
 
 // Create the serverless function
 export default async function handler(req, res) {
-  // Enable CORS
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Origin, Accept');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.status(200).end();
+    return;
+  }
+
+  // Enable CORS for actual requests
   await new Promise((resolve, reject) => {
     cors(corsOptions)(req, res, (result) => {
       if (result instanceof Error) {
@@ -27,7 +37,10 @@ export default async function handler(req, res) {
 
   // Only allow POST method
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      error: 'Method not allowed',
+      message: 'Only POST requests are allowed'
+    });
   }
 
   try {
@@ -36,7 +49,10 @@ export default async function handler(req, res) {
 
     if (!html) {
       console.log('No HTML content provided');
-      return res.status(400).json({ error: 'HTML content is required' });
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'HTML content is required'
+      });
     }
 
     // Create the full HTML document with print-optimized styling
@@ -239,14 +255,19 @@ export default async function handler(req, res) {
 
     // Set response headers
     res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Origin, Accept');
+    
     res.status(200).send(htmlContent);
     console.log('HTML response sent successfully');
 
   } catch (error) {
     console.error('Error serving resume HTML:', error);
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ 
-      error: 'Failed to serve resume HTML',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Internal Server Error',
+      message: error instanceof Error ? error.message : 'Unknown error occurred while generating resume preview'
     });
   }
 } 
