@@ -1,12 +1,8 @@
-import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
-
-const app = express();
-const port = process.env.PORT || 3001;
 
 // Configure CORS with specific options
 const corsOptions = {
@@ -17,28 +13,25 @@ const corsOptions = {
   maxAge: 86400 // Cache preflight request for 24 hours
 };
 
-// Enable CORS for all routes
-app.use(cors(corsOptions));
+// Create the serverless function
+export default async function handler(req, res) {
+  // Enable CORS
+  await new Promise((resolve, reject) => {
+    cors(corsOptions)(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
 
-// Parse JSON bodies
-app.use(express.json({ limit: '50mb' }));
+  // Only allow POST method
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-// Add debug middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path} - Origin: ${req.headers.origin}`);
-  next();
-});
-
-// Add a test endpoint
-app.get('/api/health', (req, res) => {
-  console.log('Health check request received from:', req.headers.origin);
-  res.json({ status: 'ok' });
-});
-
-app.post('/api/preview-resume', async (req, res) => {
   try {
     console.log('Resume preview request received from:', req.headers.origin);
-    console.log('Request headers:', req.headers);
     const { html } = req.body;
 
     if (!html) {
@@ -245,34 +238,15 @@ app.post('/api/preview-resume', async (req, res) => {
     `;
 
     // Set response headers
-    res.set({
-      'Content-Type': 'text/html',
-      'Access-Control-Allow-Origin': req.headers.origin || '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Origin'
-    });
-    
+    res.setHeader('Content-Type', 'text/html');
     res.status(200).send(htmlContent);
     console.log('HTML response sent successfully');
 
   } catch (error) {
     console.error('Error serving resume HTML:', error);
-    res.set({
-      'Access-Control-Allow-Origin': req.headers.origin || '*',
-      'Access-Control-Allow-Credentials': 'true'
-    });
     res.status(500).json({ 
       error: 'Failed to serve resume HTML',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-});
-
-// Handle preflight requests for all routes
-app.options('*', cors(corsOptions));
-
-app.listen(port, () => {
-  console.log(`Resume preview server running at http://localhost:${port}`);
-  console.log('CORS configuration:', corsOptions);
-}); 
+} 
