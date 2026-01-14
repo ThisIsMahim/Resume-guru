@@ -31,7 +31,12 @@ export const sendToWebhook = async (
 
     const makeRequest = async (retryCount = 0): Promise<WebhookResponse> => {
       try {
-        const response = await fetch("https://mayhem123.app.n8n.cloud/webhook/resumeGuruAI", {
+        // Use proxy in development to avoid CORS, direct URL in production
+        const webhookUrl = import.meta.env.DEV 
+          ? "/api/webhook" 
+          : "https://resume-guru.app.n8n.cloud/webhook/resumeGuruAI";
+        
+        const response = await fetch(webhookUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

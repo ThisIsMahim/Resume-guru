@@ -65,20 +65,20 @@ export default function Profile() {
     fetchDownloads();
   }, [user]);
 
-  const currentMonthDownloads = downloads.filter(d => 
+  const currentMonthDownloads = downloads.filter(d =>
     new Date(d.created_at).getMonth() === new Date().getMonth()
   ).length;
 
   const handlePreview = async (download: Download) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
       // First check if the server is available
       const healthCheck = await fetch(`${apiUrl}/api/health`, {
         mode: 'cors',
         credentials: 'include'
       });
-      
+
       if (!healthCheck.ok) {
         throw new Error(`Resume preview service is not available`);
       }
@@ -122,13 +122,13 @@ export default function Profile() {
       }
 
       const htmlContent = await response.text();
-      
+
       // Create a new window with the HTML content
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(htmlContent);
         printWindow.document.close();
-        
+
         toast.success("Resume opened in new tab!", {
           description: "Use Ctrl/Cmd + P to save as PDF or print."
         });
@@ -205,7 +205,7 @@ export default function Profile() {
               <div className="text-center py-4">Loading...</div>
             ) : downloads.length === 0 ? (
               <div className="text-center py-4 text-gray-500">
-                No downloads yet. 
+                No downloads yet.
                 <Link to="/resume-builder" className="text-purple-600 ml-1 hover:underline">
                   Create your first resume
                 </Link>

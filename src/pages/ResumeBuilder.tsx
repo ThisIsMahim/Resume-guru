@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Send, Bot, User, Download, RefreshCw, FileText, 
-  AlertTriangle, HelpCircle, GraduationCap, Briefcase, Award, 
+import {
+  Send, Bot, User, Download, RefreshCw, FileText,
+  AlertTriangle, HelpCircle, GraduationCap, Briefcase, Award,
   Layout
 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from '@/hooks/useSubscription';
 import { Link } from "react-router-dom";
 import { format } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -51,7 +52,7 @@ const SESSION_STORAGE_KEY = 'resumeGuru_lastSessionId';
 
 function DownloadCounter({ remainingDownloads, isFreeTier }: { remainingDownloads: number; isFreeTier: boolean }) {
   if (!isFreeTier) return null;
-  
+
   return (
     <div className="flex items-center gap-2 text-sm bg-white/10 px-3 py-1.5 rounded-full">
       <AlertTriangle className="h-4 w-4 text-white/70" />
@@ -60,13 +61,12 @@ function DownloadCounter({ remainingDownloads, isFreeTier }: { remainingDownload
           Unlimited downloads
         </span>
       ) : (
-        <span className={`font-medium ${
-          remainingDownloads === 0 
-            ? 'text-red-200' 
-            : remainingDownloads <= 1 
-              ? 'text-amber-200' 
-              : 'text-white'
-        }`}>
+        <span className={`font-medium ${remainingDownloads === 0
+          ? 'text-red-200'
+          : remainingDownloads <= 1
+            ? 'text-amber-200'
+            : 'text-white'
+          }`}>
           {remainingDownloads} download{remainingDownloads !== 1 ? 's' : ''} remaining
         </span>
       )}
@@ -91,10 +91,10 @@ const ResumeBuilder = () => {
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string>("");
   const { user, session } = useAuth();
-  const { 
-    isFreeTier, 
-    checkDownloadLimit, 
-    recordDownload 
+  const {
+    isFreeTier,
+    checkDownloadLimit,
+    recordDownload
   } = useSubscription();
   const [remainingDownloads, setRemainingDownloads] = useState<number>(3);
   const [currentHelperOptions, setCurrentHelperOptions] = useState<HelperOption[]>([]);
@@ -165,7 +165,7 @@ const ResumeBuilder = () => {
         try {
           await supabase
             .from('chat_sessions')
-            .update({ 
+            .update({
               status: 'inactive',
               updated_at: new Date().toISOString()
             })
@@ -177,7 +177,7 @@ const ResumeBuilder = () => {
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       // Also mark session as inactive when component unmounts
@@ -276,7 +276,7 @@ const ResumeBuilder = () => {
         setSessionId(session.session_id);
         // Store session ID in storage
         sessionStorage.setItem(SESSION_STORAGE_KEY, session.session_id);
-        
+
         // Get session data
         const { data: sessionData, error: sessionError } = await supabase
           .from('chat_sessions')
@@ -344,7 +344,7 @@ const ResumeBuilder = () => {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
@@ -352,7 +352,7 @@ const ResumeBuilder = () => {
 
   const createNewSession = async () => {
     if (!user) return;
-    
+
     try {
       const sessionId = crypto.randomUUID();
       const { error } = await supabase
@@ -365,7 +365,7 @@ const ResumeBuilder = () => {
         });
 
       if (error) throw error;
-      
+
       setSessionId(sessionId);
       // Store session ID in storage
       sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
@@ -405,7 +405,7 @@ const ResumeBuilder = () => {
       // Update session's updated_at timestamp
       await supabase
         .from('chat_sessions')
-        .update({ 
+        .update({
           updated_at: new Date().toISOString()
         })
         .eq('session_id', sessionId);
@@ -443,7 +443,7 @@ const ResumeBuilder = () => {
       sender: "user",
       timestamp: new Date()
     };
-    
+
     try {
       // Save user message
       await saveMessage(userMessage.content, userMessage.sender);
@@ -452,7 +452,7 @@ const ResumeBuilder = () => {
       setIsThinking(true);
 
       const response = await sendToWebhook(inputMessage, sessionId);
-      
+
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         content: response.message,
@@ -463,10 +463,10 @@ const ResumeBuilder = () => {
       // Save AI message
       await saveMessage(aiMessage.content, aiMessage.sender);
       setMessages(prev => [...prev, aiMessage]);
-      
+
       if (response.collectedInfo) {
         setCollectedInfo(response.collectedInfo);
-        
+
         // Update session data in Supabase
         try {
           const { error } = await supabase
@@ -482,14 +482,14 @@ const ResumeBuilder = () => {
           console.error('Error updating chat session:', error);
         }
       }
-      
+
       if (response.resumeHtml) {
         const sanitizedHtml = DOMPurify.sanitize(response.resumeHtml);
         setResumeHtml(sanitizedHtml);
         setShowShine(true);
         // Reset shine after animation
         setTimeout(() => setShowShine(false), 1000);
-        
+
         try {
           const { error } = await supabase
             .from('chat_sessions')
@@ -508,7 +508,7 @@ const ResumeBuilder = () => {
           console.error('Error updating chat session:', error);
         }
       }
-      
+
       if (response.error) {
         toast.error("Error", {
           description: response.error
@@ -530,7 +530,7 @@ const ResumeBuilder = () => {
       handleSendMessage();
     }
   };
-  
+
   const handleUpgradeClick = () => {
     navigate('/upgrade');
   };
@@ -553,7 +553,7 @@ const ResumeBuilder = () => {
 
     try {
       setIsThinking(true);
-      
+
       // Check download limits for free tier
       const canDownload = await checkDownloadLimit();
       if (!canDownload) {
@@ -614,16 +614,16 @@ const ResumeBuilder = () => {
         }
       }
 
-      // Use environment variable for API URL
-      const apiUrl = import.meta.env.VITE_API_URL;
-      
+      // Use environment variable for API URL with a local fallback
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
       // First check if the server is available
       try {
         const healthCheck = await fetch(`${apiUrl}/api/health`, {
           mode: 'cors',
           credentials: 'include'
         });
-        
+
         if (!healthCheck.ok) {
           throw new Error(`Resume preview service is not available (Status: ${healthCheck.status})`);
         }
@@ -652,7 +652,7 @@ const ResumeBuilder = () => {
         `;
         htmlToSend = resumeHtml.replace('</body>', `${watermark}</body>`);
       }
-      
+
       // Get the HTML preview
       const response = await fetch(`${apiUrl}/api/preview-resume`, {
         method: 'POST',
@@ -678,18 +678,18 @@ const ResumeBuilder = () => {
 
       // Get the HTML content
       const htmlContent = await response.text();
-      
+
       // Validate that we received HTML content
       if (!htmlContent.trim().toLowerCase().startsWith('<!doctype html')) {
         throw new Error('Invalid HTML content received from server');
       }
-      
+
       // Create a new window with the HTML content
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(htmlContent);
         printWindow.document.close();
-        
+
         // Record the download
         await supabase
           .from('downloads')
@@ -700,7 +700,7 @@ const ResumeBuilder = () => {
             resume_html: resumeHtml,
             created_at: new Date().toISOString()
           });
-        
+
         toast.success("Resume opened in new tab!", {
           description: "Use Ctrl/Cmd + P to save as PDF or print."
         });
@@ -713,7 +713,7 @@ const ResumeBuilder = () => {
         .rpc('get_remaining_downloads', {
           user_id: user.id
         }) as { data: number | null; error: any };
-      
+
       setRemainingDownloads(remainingData ?? 0);
 
     } catch (error) {
@@ -732,7 +732,7 @@ const ResumeBuilder = () => {
       try {
         await supabase
           .from('chat_sessions')
-          .update({ 
+          .update({
             status: 'completed',
             updated_at: new Date().toISOString()
           })
@@ -755,11 +755,11 @@ const ResumeBuilder = () => {
 
   const endSession = async () => {
     if (!sessionId) return;
-    
+
     try {
       await supabase
         .from('chat_sessions')
-        .update({ 
+        .update({
           status: 'completed',
           updated_at: new Date().toISOString()
         })
@@ -836,7 +836,7 @@ const ResumeBuilder = () => {
 
     // Combine and shuffle dynamic options to keep it fresh
     const shuffledDynamic = dynamicOptions.sort(() => Math.random() - 0.5);
-    
+
     // Always keep base options and add 1-2 dynamic options
     setCurrentHelperOptions([
       ...baseOptions,
@@ -852,7 +852,7 @@ const ResumeBuilder = () => {
     <div className="min-h-screen bg-gradient-to-r from-purple-50 to-pink-50">
       <ResumeBuilderNavbar />
       <div className="container mx-auto py-6 px-4 max-w-7xl">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
@@ -863,7 +863,7 @@ const ResumeBuilder = () => {
                 <Bot className="mr-2 h-6 w-6 text-pink-200" />
                 <h2 className="font-semibold">ResumeGuru AI Assistant</h2>
               </div>
-              
+
               <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-white">
                 {messages.map((msg) => (
                   <motion.div
@@ -873,27 +873,39 @@ const ResumeBuilder = () => {
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div className={`flex items-start max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                      <Avatar className={`items-center justify-center ${msg.sender === 'user' ? 'ml-2' : 'mr-2'} ${
-                        msg.sender === 'user' 
-                          ? 'bg-gradient-to-br from-purple-400 to-purple-600 ring-2 ring-purple-200' 
-                          : 'bg-gradient-to-br from-pink-400 to-pink-600 ring-2 ring-pink-200'
-                      } h-8 w-8`}>
-                        {msg.sender === 'user' ? 
-                          <User className="h-4 w-4 text-white" /> : 
+                      <Avatar className={`flex items-center justify-center ${msg.sender === 'user' ? 'ml-2' : 'mr-2'} ${msg.sender === 'user'
+                        ? 'bg-gradient-to-br from-purple-400 to-purple-600 ring-2 ring-purple-200'
+                        : 'bg-gradient-to-br from-pink-400 to-pink-600 ring-2 ring-pink-200'
+                        } h-8 w-8`}>
+                        {msg.sender === 'user' ?
+                          <User className="h-4 w-4 text-white" /> :
                           <Bot className="h-4 w-4 text-white" />
                         }
                       </Avatar>
-                      <div className={`rounded-lg p-3 ${
-                        msg.sender === 'user' 
-                          ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-tr-none shadow-md' 
-                          : 'bg-white text-gray-800 rounded-tl-none border border-gray-200 shadow-sm'
-                      }`}>
-                        {msg.content}
+                      <div className={`rounded-lg p-3 ${msg.sender === 'user'
+                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-tr-none shadow-md'
+                        : 'bg-white text-gray-800 rounded-tl-none border border-gray-200 shadow-sm'
+                        }`}>
+                        <div className={`prose prose-sm max-w-none text-left ${msg.sender === 'user' ? 'prose-invert' : ''}`}>
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                              ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1">{children}</ul>,
+                              ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1">{children}</ol>,
+                              li: ({ children }) => <li className="text-inherit">{children}</li>,
+                              h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+                              h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
+                              strong: ({ children }) => <strong className="font-bold text-inherit">{children}</strong>,
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 ))}
-                
+
                 {showQuickOptions && messages.length === 1 && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -912,11 +924,11 @@ const ResumeBuilder = () => {
                     ))}
                   </motion.div>
                 )}
-                
+
                 {isThinking && (
                   <div className="flex justify-start">
                     <div className="flex items-start max-w-[80%]">
-                      <Avatar className="mr-2 bg-gradient-to-br from-pink-400 to-pink-600 ring-2 ring-pink-200 h-8 w-8">
+                      <Avatar className="mr-2 bg-gradient-to-br from-pink-400 to-pink-600 ring-2 ring-pink-200 h-8 w-8 flex items-center justify-center">
                         <Bot className="h-4 w-4 text-white" />
                       </Avatar>
                       <div className="rounded-lg p-3 bg-white text-gray-800 rounded-tl-none border border-gray-200 shadow-sm">
@@ -930,7 +942,7 @@ const ResumeBuilder = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="border-t p-4 bg-gray-50">
                 {/* Helper Options */}
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -947,7 +959,7 @@ const ResumeBuilder = () => {
                     </Button>
                   ))}
                 </div>
-                
+
                 {/* Existing text area and send button */}
                 <div className="flex items-center">
                   <textarea
@@ -958,8 +970,8 @@ const ResumeBuilder = () => {
                     className="flex-grow border rounded-l-md p-2 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none h-12 max-h-48"
                     rows={1}
                   />
-                  <Button 
-                    onClick={() => handleSendMessage()} 
+                  <Button
+                    onClick={() => handleSendMessage()}
                     className="rounded-l-none h-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
                     disabled={isThinking || currentInput.trim() === ''}
                   >
@@ -969,7 +981,7 @@ const ResumeBuilder = () => {
               </div>
             </Card>
           </div>
-          
+
           <div className="lg:col-span-1">
             <Card className={`h-[calc(100vh-160px)] flex flex-col overflow-hidden shadow-xl rounded-xl border-0 relative ${showShine ? 'animate-shine' : ''}`}>
               <style>
@@ -1007,21 +1019,21 @@ const ResumeBuilder = () => {
               </style>
               <div className="bg-gradient-to-r from-purple-600 to-pink-500 text-white p-4 flex items-center justify-between">
                 <h2 className="font-semibold">Your Resume</h2>
-                <DownloadCounter remainingDownloads={remainingDownloads} isFreeTier={isFreeTier} /> 
+                <DownloadCounter remainingDownloads={remainingDownloads} isFreeTier={isFreeTier} />
 
                 <div className="flex items-center space-x-4">
                   <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="bg-transparent hover:bg-white/10 text-white border-white/20"
                       onClick={handleReset}
                     >
                       <RefreshCw className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="bg-transparent hover:bg-white/10 text-white border-white/20"
                       onClick={handleDownload}
                     >
@@ -1030,7 +1042,7 @@ const ResumeBuilder = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex-grow overflow-y-auto p-6 bg-white">
                 {resumeHtml ? (
                   <motion.div

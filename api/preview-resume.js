@@ -55,16 +55,26 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create the full HTML document with print-optimized styling
+    // Create the full HTML document with premium print-optimized styling
     const htmlContent = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Your Resume - Print or Download as PDF</title>
+          <title>Resume Preview | ResumeGuru</title>
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
+            :root {
+              --primary: #ec4899;
+              --primary-dark: #db2777;
+              --secondary: #9333ea;
+              --bg-page: #f8fafc;
+              --bg-card: #ffffff;
+              --text-main: #1e293b;
+              --text-muted: #64748b;
+            }
+
             * {
               box-sizing: border-box;
               margin: 0;
@@ -72,183 +82,194 @@ export default async function handler(req, res) {
             }
             
             body {
-              font-family: 'Inter', Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              background: white;
-              padding: 40px;
-            }
-            
-            .resume-container {
-              max-width: 850px;
-              margin: 0 auto;
-              background: white;
-              position: relative;
-            }
-
-            .print-instructions {
-              position: fixed;
-              top: 20px;
-              right: 20px;
-              background: #f8f9fa;
-              padding: 15px 20px;
-              border-radius: 8px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-              z-index: 1000;
-            }
-
-            .print-instructions h3 {
-              margin-bottom: 10px;
-              color: #2d3748;
-            }
-
-            .print-instructions ol {
-              margin-left: 20px;
-            }
-
-            .print-instructions li {
-              margin-bottom: 8px;
-              color: #4a5568;
-            }
-            
-            h1 {
-              font-size: 28px;
-              font-weight: 700;
-              margin-bottom: 8px;
-              color: #1a1a1a;
-            }
-            
-            h2 {
-              font-size: 20px;
-              font-weight: 600;
-              margin: 24px 0 12px;
-              color: #2a2a2a;
-              border-bottom: 2px solid #eaeaea;
-              padding-bottom: 8px;
-            }
-            
-            h3 {
-              font-size: 16px;
-              font-weight: 600;
-              margin: 16px 0 8px;
-              color: #2a2a2a;
-            }
-            
-            p {
-              margin: 8px 0;
-              font-size: 14px;
-            }
-            
-            ul {
-              margin: 8px 0;
-              padding-left: 20px;
-            }
-            
-            li {
-              margin: 4px 0;
-              font-size: 14px;
-            }
-            
-            .section {
-              margin-bottom: 24px;
-              break-inside: avoid;
-            }
-            
-            .contact-info {
-              margin-bottom: 24px;
-              font-size: 14px;
-              color: #666;
-            }
-            
-            .experience-item, .education-item {
-              margin-bottom: 16px;
-              break-inside: avoid;
-            }
-            
-            .date {
-              color: #666;
-              font-size: 14px;
-            }
-            
-            .company, .school {
-              font-weight: 500;
-              color: #2a2a2a;
-            }
-            
-            .skills-list {
+              font-family: 'Inter', system-ui, -apple-system, sans-serif;
+              line-height: 1.5;
+              color: var(--text-main);
+              background: var(--bg-page);
+              min-height: 100vh;
               display: flex;
-              flex-wrap: wrap;
-              gap: 8px;
-              list-style: none;
-              padding: 0;
+              flex-direction: column;
+              align-items: center;
+              padding: 40px 20px;
             }
             
-            .skill-item {
-              background: #f5f5f5;
-              padding: 4px 12px;
+            /* Preview UI Elements */
+            .preview-header {
+              width: 100%;
+              max-width: 850px;
+              margin-bottom: 24px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+
+            .logo {
+              font-weight: 800;
+              font-size: 24px;
+              background: linear-gradient(to right, var(--primary), var(--secondary));
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+            }
+
+            .print-button {
+              background: linear-gradient(to right, var(--primary), var(--secondary));
+              color: white;
+              border: none;
+              padding: 10px 24px;
+              border-radius: 99px;
+              font-weight: 600;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+              transition: all 0.2s ease;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .print-button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 16px rgba(236, 72, 153, 0.4);
+            }
+
+            .instruction-panel {
+              position: fixed;
+              left: 40px;
+              top: 100px;
+              width: 280px;
+              background: rgba(255, 255, 255, 0.8);
+              backdrop-filter: blur(12px);
+              border: 1px solid rgba(255, 255, 255, 0.3);
+              padding: 24px;
+              border-radius: 16px;
+              box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+              z-index: 100;
+            }
+
+            .instruction-panel h3 {
+              font-size: 16px;
+              margin-bottom: 16px;
+              color: var(--text-main);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .instruction-panel ol {
+              list-style: none;
+              counter-reset: step;
+            }
+
+            .instruction-panel li {
+              font-size: 13px;
+              color: var(--text-muted);
+              margin-bottom: 12px;
+              position: relative;
+              padding-left: 28px;
+            }
+
+            .instruction-panel li::before {
+              counter-increment: step;
+              content: counter(step);
+              position: absolute;
+              left: 0;
+              top: -2px;
+              width: 20px;
+              height: 20px;
+              background: #f1f5f9;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 11px;
+              font-weight: 700;
+              color: var(--primary);
+            }
+
+            .instruction-panel strong {
+              color: var(--text-main);
+            }
+            
+            .resume-wrapper {
+              background: white;
+              width: 100%;
+              max-width: 850px;
+              min-height: 1100px;
+              padding: 60px;
+              box-shadow: 0 20px 50px rgba(0,0,0,0.1);
               border-radius: 4px;
-              font-size: 14px;
+              margin-bottom: 40px;
+            }
+
+            /* Responsive Adjustments */
+            @media (max-width: 1400px) {
+              .instruction-panel {
+                position: static;
+                width: 100%;
+                max-width: 850px;
+                margin-bottom: 24px;
+              }
             }
 
             @media print {
               body {
                 padding: 0;
-                background: white;
+                background: white !important;
               }
 
-              .resume-container {
-                padding: 20px;
+              .preview-header,
+              .instruction-panel,
+              .print-button {
+                display: none !important;
               }
 
-              .print-instructions {
-                display: none;
+              .resume-wrapper {
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                max-width: none !important;
+                width: 100% !important;
+                min-height: auto !important;
               }
-              
+
               @page {
                 size: A4;
-                margin: 20mm;
-              }
-
-              /* Ensure good page breaks */
-              h2 {
-                break-after: avoid;
-              }
-              
-              h3 {
-                break-after: avoid;
-              }
-              
-              .section {
-                break-inside: avoid;
+                margin: 15mm;
               }
             }
           </style>
-          <script>
-            // Auto-open print dialog when the page loads
-            window.onload = function() {
-              // Small delay to ensure styles are loaded
-              setTimeout(() => {
-                // Uncomment the next line to automatically open print dialog
-                // window.print();
-              }, 1000);
-            };
-          </script>
         </head>
         <body>
-          <div class="print-instructions">
-            <h3>📄 Download as PDF</h3>
+          <header class="preview-header">
+            <div class="logo">ResumeGuru</div>
+            <button class="print-button" onclick="window.print()">
+              <span>Download PDF</span>
+            </button>
+          </header>
+
+          <aside class="instruction-panel">
+            <h3>📄 How to save as PDF</h3>
             <ol>
-              <li>Press <strong>Ctrl + P</strong> (or ⌘ + P on Mac)</li>
-              <li>Set "Destination" to <strong>Save as PDF</strong></li>
-              <li>Set "Layout" to <strong>Portrait</strong></li>
-              <li>Set "Margins" to <strong>Default</strong></li>
-              <li>Disable "Headers and footers"</li>
-              <li>Click "Save" or "Print"</li>
+              <li>Press <strong>Ctrl + P</strong> (or ⌘ + P)</li>
+              <li>Set Destination to <strong>Save as PDF</strong></li>
+              <li>Set Layout to <strong>Portrait</strong></li>
+              <li>Under More Settings:
+                <ul style="list-style: disc; margin-left: 20px; margin-top: 4px;">
+                  <li>Margins: <strong>Default</strong></li>
+                  <li><strong>Hide</strong> Headers & Footers</li>
+                  <li><strong>Show</strong> Background Graphics</li>
+                </ul>
+              </li>
             </ol>
-          </div>
-          <div class="resume-container">
+          </aside>
+
+          <main class="resume-wrapper">
             ${html}
-          </div>
+          </main>
+
+          <script>
+            // Add a small hint for users
+            console.log("ResumeGuru: Preview loaded. Use the Print button or Ctrl+P to download.");
+          </script>
         </body>
       </html>
     `;
